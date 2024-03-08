@@ -1,124 +1,100 @@
-;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 (setq user-full-name "Daniel Xu"
       user-mail-address "hey@x0ba.lol")
 
-;; When I bring up Doom's scratch buffer with SPC x, it's often to play with
-;; elisp or note something down (that isn't worth an entry in my notes). I can
-;; do both in `lisp-interaction-mode'.
 (setq doom-scratch-initial-major-mode 'lisp-interaction-mode)
 
-;;
-;;;; UI
-
 (setq doom-theme 'doom-rose-pine)
-(remove-hook 'window-setup-hook #'doom-init-theme-h)
-(add-hook 'after-init-hook #'doom-init-theme-h 'append)
-(setq doom-font (font-spec :family "Maple Mono" :size 15)
-      doom-variable-pitch-font (font-spec :family "Overpass" :size 16 :weight 'medium))
 
-;; Line numbers are pretty slow all around. The performance boost of disabling
-;; them outweighs the utility of always keeping them on.
-(setq display-line-numbers-type nil)
+(setq doom-font (font-spec :family "Maple Mono" :size 14)
+      doom-variable-pitch-font (font-spec :family "IBM Plex Sans" :size 16 :weight 'medium))
 
-;; Prevents some cases of Emacs flickering.
-(add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
+(use-package mixed-pitch
+  :hook
+  (text-mode . mixed-pitch-mode))
 
-;; org mode
+(after! doom-modeline
+  (setq evil-normal-state-tag "<λ>"
+        evil-insert-state-tag "<I>"
+        evil-visual-state-tag "<V>"
+        evil-motion-state-tag "<M>"
+        evil-emacs-state-tag "<EMACS>")
+
+  (setq doom-modeline-modal-icon nil
+        doom-modeline-major-mode-icon t
+        doom-modeline-minor-modes t
+        doom-modeline-major-mode-color-icon t
+        doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode)
+        doom-modeline-buffer-encoding nil
+        inhibit-compacting-font-caches t
+        find-file-visit-truename t)
+
+  (custom-set-faces!
+    '(doom-modeline-evil-insert-state :inherit doom-modeline-urgent)
+    '(doom-modeline-evil-visual-state :inherit doom-modeline-warning)
+    '(doom-modeline-evil-normal-state :inherit doom-modeline-buffer-path))
+
+  (setq doom-modeline-enable-word-count t))          ;; Show word count
+
+(use-package! minions
+  :hook (after-init . minions-mode))
+(setq doom-modeline-height 35)
+(defun doom-modeline-conditional-buffer-encoding ()
+  "We expect the encoding to be LF UTF-8, so only show the modeline when this is not the case"
+  (setq-local doom-modeline-buffer-encoding
+              (unless (and (memq (plist-get (coding-system-plist buffer-file-coding-system) :category)
+                                 '(coding-category-undecided coding-category-utf-8))
+                           (not (memq (coding-system-eol-type buffer-file-coding-system) '(1 2))))t)))
+
+(add-hook 'after-change-major-mode-hook #'doom-modeline-conditional-buffer-encoding)
+
+(setq default-frame-alist '((min-height . 1)  '(height . 45)
+                            (min-width  . 1)  '(width  . 81)
+                            (vertical-scroll-bars . nil)
+                            (internal-border-width . 15)
+                            (tool-bar-lines . 0)
+                            (menu-bar-lines . 0)))
+
+(setq initial-frame-alist default-frame-alist)
+(setq-default line-spacing 0.24)
+
+(custom-set-faces!
+  `(vertical-border :background ,(doom-color 'bg) :foreground ,(doom-color 'bg)))
+(remove-hook 'doom-first-buffer-hook #'global-hl-line-mode)
+
+(setq scroll-margin 2
+      auto-save-default t
+      display-line-numbers-type 'relative
+      delete-by-moving-to-trash t
+      truncate-string-ellipsis "…")
+(global-subword-mode 1)
+
+(setq +zen-text-scale 0.8)
+
+(setq evil-split-window-below t
+      evil-vsplit-window-right t)
+
+(setq evil-ex-substitute-global t)
+
+(setq fancy-splash-image (file-name-concat doom-user-dir "splash.png"))
+(setq +doom-dashboard-functions '(doom-dashboard-widget-banner))
+
+(use-package! lsp-bridge
+  :config
+  (setq lsp-bridge-enable-log nil
+        lsp-bridge-nix-lsp-server 'nil)
+  (global-lsp-bridge-mode))
+
+(mac-pseudo-daemon-mode 1)
+
 (setq org-directory "~/org/")
 (after! org-agenda
   (setq org-agenda-files (list "~/org/school.org"
                                "~/org/todo.org")))
 
-;; use my mixed pitch font for org mode
-(use-package mixed-pitch
-  :hook
-  ;; If you want it in all text modes:
-  (text-mode . mixed-pitch-mode))
-
-;; better defaults
-(setq scroll-margin 2
-      auto-save-default t
-      display-line-numbers-type nil
-      delete-by-moving-to-trash t
-      truncate-string-ellipsis "…")
-
-(setq initial-frame-alist default-frame-alist)
-
-;; zen-mode is a bit too overzealous when zooming in
-(setq +zen-text-scale 0.8)
-
-;;
-;;; Modules
-
-;;; :completion company
-;; IMO, modern editors have trained a bad habit into us all: a burning need for
-;; completion all the time -- as we type, as we breathe, as we pray to the
-;; ancient ones -- but how often do you *really* need that information? I say
-;; rarely. So opt for manual completion:
-(after! company
-  (setq company-idle-delay nil))
-
-;;; :ui modeline
-;; An evil mode indicator is redundant with cursor shape
-(setq doom-modeline-modal nil)
-
-;;; :editor evil
-;; Focus new window after splitting
-(setq evil-split-window-below t
-      evil-vsplit-window-right t)
-
-;; Implicit /g flag on evil ex substitution, because I use the default behavior
-;; less often.
-(setq evil-ex-substitute-global t)
-
-;;
-;;; Keybinds
-
-;;; :tools lsp
-;; Disable invasive lsp-mode features
-(after! lsp-mode
-  (setq lsp-enable-symbol-highlighting nil
-        ;; If an LSP server isn't present when I start a prog-mode buffer, you
-        ;; don't need to tell me. I know. On some machines I don't care to have
-        ;; a whole development environment for some ecosystems.
-        lsp-enable-suggest-server-download nil))
-(after! lsp-ui
-  (setq lsp-ui-sideline-enable nil  ; no more useful than flycheck
-        lsp-ui-doc-enable nil))     ; redundant with K
-
-;;; :ui doom-dashboard
-(setq fancy-splash-image (file-name-concat doom-user-dir "splash.png"))
-;; Hide the menu for as minimalistic a startup screen as possible.
-(setq +doom-dashboard-functions '(doom-dashboard-widget-banner))
-
-;;; :app everywhere
-(after! emacs-everywhere
-  ;; Easier to match with a bspwm rule:
-  ;;   bspc rule -a 'Emacs:emacs-everywhere' state=floating sticky=on
-  (setq emacs-everywhere-frame-name-format "emacs-anywhere")
-
-  ;; The modeline is not useful to me in the popup window. It looks much nicer
-  ;; to hide it.
-  (remove-hook 'emacs-everywhere-init-hooks #'hide-mode-line-mode)
-
-  ;; Semi-center it over the target window, rather than at the cursor position
-  ;; (which could be anywhere).
-  (defadvice! center-emacs-everywhere-in-origin-window (frame window-info)
-    :override #'emacs-everywhere-set-frame-position
-    (cl-destructuring-bind (x y width height)
-        (emacs-everywhere-window-geometry window-info)
-      (set-frame-position frame
-                          (+ x (/ width 2) (- (/ width 2)))
-                          (+ y (/ height 2))))))
-
-;;;; langs
-;; Nix
-(set-formatter! 'alejandra "alejandra --quiet" :modes '(nix-mode))
-
-;;;; MacOS
-;; Use mac-pseudo-daemon to
-;; keep an instance of emacs
-;; running in the background, as I use
-;; emacs-macport which doesnt support
-;; emacs-daemon
-(mac-pseudo-daemon-mode 1)
+(custom-theme-set-faces!
+  'doom-rose-pine
+  '(org-level-4 :inherit outline-3 :height 1.1)
+  '(org-level-3 :inherit outline-3 :height 1.2)
+  '(org-level-2 :inherit outline-2 :height 1.5)
+  '(org-level-1 :inherit outline-1 :height 1.7)
+  '(org-document-title  :height 1.7 :underline nil))
