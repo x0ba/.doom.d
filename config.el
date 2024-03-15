@@ -3,35 +3,13 @@
 
 (setq doom-scratch-initial-major-mode 'lisp-interaction-mode)
 
-(load-theme 'catppuccin t t)
-(catppuccin-set-color 'rosewater "#ece3e1")
-(catppuccin-set-color 'flamingo "#e1d2d2")
-(catppuccin-set-color 'pink "#ddccd8")
-(catppuccin-set-color 'mauve "#bbb2c9")
-(catppuccin-set-color 'red "#c4a2aa")
-(catppuccin-set-color 'maroon "#cbadb1")
-(catppuccin-set-color 'peach "#d5beb4")
-(catppuccin-set-color 'yellow "#ece3d3")
-(catppuccin-set-color 'green "#b9ddb6")
-(catppuccin-set-color 'teal "#badad4")
-(catppuccin-set-color 'sky "#b8d4db")
-(catppuccin-set-color 'sapphire "#a9c0ce")
-(catppuccin-set-color 'blue "#aab3c7")
-(catppuccin-set-color 'lavender "#bfc1d2")
-(catppuccin-set-color 'text "#d3d6e1")
-(catppuccin-set-color 'subtext1 "#bec2d2")
-(catppuccin-set-color 'subtext0 "#a8adc3")
-(catppuccin-set-color 'overlay2 "#9299b4")
-(catppuccin-set-color 'overlay1 "#7c84a5")
-(catppuccin-set-color 'overlay0 "#686f94")
-(catppuccin-set-color 'surface2 "#555a7b")
-(catppuccin-set-color 'surface1 "#434664")
-(catppuccin-set-color 'surface0 "#30314b")
-(catppuccin-set-color 'base "#101010")
-(catppuccin-set-color 'mantle "#090909")
-(catppuccin-set-color 'crust "#080808")
-(catppuccin-reload)
-(setq doom-theme 'catppuccin)
+(use-package solaire-mode
+  :hook (after-init . solaire-global-mode)
+  :config
+  (push '(treemacs-window-background-face . solaire-default-face) solaire-mode-remap-alist)
+  (push '(treemacs-hl-line-face . solaire-hl-line-face) solaire-mode-remap-alist))
+
+(setq doom-theme 'doom-mountain)
 
 (setq doom-font (font-spec :family "Liga Berkeley Mono" :size 14)
       doom-big-font (font-spec :family "Liga Berkeley Mono" :size 26)
@@ -41,7 +19,7 @@
 
 (setq doom-modeline-height 35)
 
-(setq-default line-spacing 0.24)
+(setq-default line-spacing 0.20)
 
 (setq scroll-margin 2
       auto-save-default t
@@ -49,12 +27,43 @@
       delete-by-moving-to-trash t
       truncate-string-ellipsis "…")
 (global-subword-mode 1)
+(setq global-hl-line-modes nil)
 
 (use-package! golden-ratio
-  :ensure t
+  :hook (after-init . golden-ratio-mode)
+  :custom
+  (golden-ratio-auto-scale t)
+  (golden-ratio-exclude-modes '(treemacs-mode occur-mode))
   :config
-  (add-to-list 'golden-ratio-extra-commands 'ace-window)
-  (golden-ratio-mode 1))
+  (mapc (lambda (cmd) (add-to-list 'golden-ratio-extra-commands cmd))
+      '(ace-window
+        evil-window-delete
+        evil-window-split
+        evil-window-vsplit
+        evil-window-left
+        evil-window-right
+        evil-window-up
+        evil-window-down
+        evil-window-bottom-right
+        evil-window-top-left
+        evil-window-mru
+        evil-window-next
+        evil-window-prev
+        evil-window-new
+        evil-window-vnew
+        evil-window-rotate-upwards
+        evil-window-rotate-downwards
+        evil-window-move-very-top
+        evil-window-move-far-left
+        evil-window-move-far-right
+        evil-window-move-very-bottom)))
+
+(use-package vertico-posframe
+  :hook (after-init . vertico-posframe-mode)
+  :custom
+  (vertico-posframe-parameters
+   '((left-fringe . 8)
+     (right-fringe . 8))))
 
 (defvar mixed-pitch-modes '(org-mode LaTeX-mode markdown-mode gfm-mode Info-mode)
   "Modes that `mixed-pitch-mode' should be enabled in, but only after UI initialisation.")
@@ -131,6 +140,15 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
                     (doom-blend 'red 'orange (- size-index 1)))))
       (propertize (file-size-human-readable size) 'face (list :foreground color)))))
 
+(use-package! avy
+  :config
+  (setq avy-all-windows t))
+
+(add-hook 'doom-after-init-hook (lambda () (tool-bar-mode 1) (tool-bar-mode 0)))
+(use-package! ns-auto-titlebar
+  :config
+  (when (eq system-type 'darwin) (ns-auto-titlebar-mode)))
+
 (setq +zen-text-scale 0.8)
 
 (defvar +zen-serif-p t
@@ -189,15 +207,10 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
 (setq fancy-splash-image (file-name-concat doom-user-dir "splash.png"))
 (setq +doom-dashboard-functions '(doom-dashboard-widget-banner))
 
-(after! centaur-tabs
-  (centaur-tabs-mode -1)
-  (setq centaur-tabs-height 36
-        centaur-tabs-set-icons t
-        centaur-tabs-modified-marker "o"
-        centaur-tabs-close-button "×"
-        centaur-tabs-set-bar 'above
-        centaur-tabs-gray-out-icons 'buffer)
-  (centaur-tabs-change-fonts "Overpass" 160))
+(use-package spacious-padding
+  :ensure t
+  :defer
+  :hook (after-init . spacious-padding-mode))
 
 (setq org-directory "~/org/")
 (after! org-agenda

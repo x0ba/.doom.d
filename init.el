@@ -45,7 +45,7 @@
        ;;neotree           ; a project drawer, like NERDTree for vim
        ophints           ; highlight the region an operation acts on
        (popup +all +defaults)   ; tame sudden yet inevitable temporary windows
-       (tabs +centaur-tabs)             ; a tab bar for Emacs
+       ;; (tabs +centaur-tabs)             ; a tab bar for Emacs
        treemacs          ; a project drawer, like neotree but cooler
        ;;unicode           ; extended unicode support for various languages
        (vc-gutter +pretty) ; vcs diff in the fringe
@@ -86,8 +86,8 @@
 
        :checkers
        syntax              ; tasing you for every semicolon you forget
-       ;; (spell +flyspell) ; tasing you for misspelling mispelling
-       ;; grammar           ; tasing grammar mistake every you make
+       ;; (:if (executable-find "aspell") spell) ; tasing you for misspelling mispelling
+       ;; (:if (executable-find "languagetool") grammar) ; tasing grammar mistake every you make
 
        :tools
        ;;ansible
